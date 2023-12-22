@@ -1,3 +1,6 @@
+"""
+Completers File
+"""
 from prompt_toolkit.completion import (
     Completer,
     Completion,
@@ -26,7 +29,9 @@ class FuzzyWordCompleter(Completer):
             words=lambda: self.words, WORD=self.WORD, meta_dict=self.meta_dict
         )
 
-        self.fuzzy_completer = FuzzyCompleter(self.word_completer, WORD=self.WORD)
+        self.fuzzy_completer = FuzzyCompleter(
+            self.word_completer, WORD=self.WORD
+        )
 
     def get_completions(self, document, complete_event):
         return self.fuzzy_completer.get_completions(document, complete_event)
@@ -46,7 +51,9 @@ class TypeCompleter(FuzzyWordCompleter):
             "test": "any work to tests",
             "wip": "work in progress / might not build",
         }
-        super().__init__(self.meta_dict.keys(), meta_dict=self.meta_dict, WORD=False)
+        super().__init__(
+            self.meta_dict.keys(), meta_dict=self.meta_dict, WORD=False
+        )
 
 
 class FooterCompleter(FuzzyWordCompleter):
@@ -66,5 +73,7 @@ class FooterCompleter(FuzzyWordCompleter):
             "Clubhouse [branch ch": "Associates branch with ticket",
         }
         super().__init__(
-            self.footer_meta_dict.keys(), meta_dict=self.footer_meta_dict, WORD=False
+            self.footer_meta_dict.keys(),
+            meta_dict=self.footer_meta_dict,
+            WORD=False,
         )

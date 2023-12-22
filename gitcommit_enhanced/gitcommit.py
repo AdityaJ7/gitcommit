@@ -1,25 +1,6 @@
-#!/usr/bin/env python
-#
-# gitcommit: a tool for writing conventional commits, conveniently
-# Author: Ben Greenberg
-# Created: 20th September 2019
-#
-# Implements Conventional Commit v1.0.0-beta.4
-#
-# TEMPLATE:
-#
-# <type>[(optional scope)]: <description>
-#
-# [BREAKING CHANGE: ][optional body / required if breaking change]
-#
-# [optional footer]
-#
-# ADDITIONAL RULES:
-# - Subject line (i.e. top) should be no more than 50 characters.
-# - Every other line should be no more than 72 characters.
-# - Wrapping is allowed in the body and footer, NOT in the subject.
-#
-
+"""
+Gitcommit Main Logic File
+"""
 from __future__ import print_function
 import os
 import sys
@@ -30,18 +11,16 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.styles import Style
 from prompt_toolkit.key_binding import KeyBindings
-from gitcommit.style import Ansi
-from gitcommit.validators import (
+from gitcommit_enhanced.style import Ansi
+from gitcommit_enhanced.validators import (
     DescriptionValidator,
     TypeValidator,
     YesNoValidator,
     BodyValidator,
     FooterValidator,
 )
-from gitcommit.completers import TypeCompleter, FooterCompleter
-from gitcommit.updater import check_for_update
-from gitcommit.utils import capitaliseFirst
-from gitcommit.style import style
+from gitcommit_enhanced.completers import TypeCompleter, FooterCompleter
+from gitcommit_enhanced.style import style
 
 home = os.path.expanduser("~")
 CONFIG_HOME_DIR = os.path.join(home, ".gitcommit/")
@@ -54,6 +33,19 @@ except:
 
 
 bindings = KeyBindings()
+
+
+def capitaliseFirst(string_in: str) -> str:
+    """
+    A utility function that will capitalise only the first character in a string.
+    Unlike str.capitalize() which will lower all other characters in the string.
+    """
+    if len(string_in) == 0:
+        return ""
+    elif len(string_in) == 1:
+        return string_in[0].upper()
+    elif len(string_in) > 1:
+        return string_in[0].upper() + string_in[1:]
 
 
 @bindings.add("s-down")
@@ -141,7 +133,9 @@ def add_type(commit_msg):
             break_long_words=False,
         )
         # ensure each line has trailing whitespace, then do join
-        type_descr_str = "".join(map(lambda l: l.ljust(type_descr_width), descr_lines))
+        type_descr_str = "".join(
+            map(lambda l: l.ljust(type_descr_width), descr_lines)
+        )
 
         # Combine type name with type description
         type_print = prefixes[i].ljust(prefix_length) + type_descr_str
@@ -180,7 +174,9 @@ def add_scope(commit_msg):
     text = Ansi.colour(Ansi.fg.bright_green, "Scope (optional): ")
     history_file_path = os.path.join(CONFIG_HOME_DIR, "scope_history")
     c_scope = prompt(
-        ANSI(text), history=FileHistory(history_file_path), key_bindings=bindings
+        ANSI(text),
+        history=FileHistory(history_file_path),
+        key_bindings=bindings,
     ).strip()
 
     if c_scope != "":
@@ -217,14 +213,16 @@ def check_if_breaking_change():
 
 def add_description(commit_msg):
     if IS_BREAKING_CHANGE is None:
-        raise ValueError("Global variable `IS_BREAKING_CHANGE` has not been set.")
+        raise ValueError(
+            "Global variable `IS_BREAKING_CHANGE` has not been set."
+        )
 
     if IS_BREAKING_CHANGE:
         commit_msg += "!: "
     else:
         commit_msg += ": "
 
-    num_chars_remaining = 50 - len(commit_msg)
+    num_chars_remaining = 61 - len(commit_msg)
     Ansi.print_info(
         wrap_width(
             "\nWhat is the commit description / title. A short summary of the code changes. Use the imperative mood. No more than {} characters.".format(
@@ -267,7 +265,9 @@ def custom_prompt_continuation(width, line_number, is_soft_wrap):
 
 def add_body(commit_msg):
     if IS_BREAKING_CHANGE is None:
-        raise ValueError("Global variable `IS_BREAKING_CHANGE` has not been set.")
+        raise ValueError(
+            "Global variable `IS_BREAKING_CHANGE` has not been set."
+        )
 
     history_file_path = os.path.join(CONFIG_HOME_DIR, "body_history")
     session = PromptSession(
@@ -335,7 +335,7 @@ def add_body(commit_msg):
                 wrapped_line = "\n".join(
                     textwrap.wrap(
                         l_stripped,
-                        width=72,
+                        width=79,
                         break_long_words=False,
                         break_on_hyphens=False,
                         subsequent_indent="   " if bulleted_line else "",
@@ -374,7 +374,9 @@ def add_footer(commit_msg):
         history=FileHistory(history_file_path),
         key_bindings=bindings,
     )
-    c_footer = session.prompt(ANSI(text), validator=FooterValidator(session)).strip()
+    c_footer = session.prompt(
+        ANSI(text), validator=FooterValidator(session)
+    ).strip()
 
     if c_footer != "":
         f_lines = c_footer.split("\n")
@@ -389,7 +391,7 @@ def add_footer(commit_msg):
             f_lines[i] = "\n".join(
                 textwrap.wrap(
                     line,
-                    width=72,
+                    width=79,
                     break_long_words=False,
                     break_on_hyphens=False,
                     subsequent_indent="  ",
@@ -404,12 +406,6 @@ def add_footer(commit_msg):
 
 
 def run(args):
-    # print(sys.version + "/n")
-
-    if len(args) > 0 and args[0] in ["version", "update"]:
-        check_for_update(verbose=True)
-        return  # Exit early
-
     # Ensure the config directory exists
     os.makedirs(CONFIG_HOME_DIR, exist_ok=True)
 
@@ -434,7 +430,8 @@ def run(args):
         print("Starting a conventional git commit...")
         print(
             Ansi.colour(
-                Ansi.fg.bright_red, "Tip: Press the up arrow key to recall history!"
+                Ansi.fg.bright_red,
+                "Tip: Press the up arrow key to recall history!",
             )
         )
         commit_msg = add_type(commit_msg)
@@ -481,14 +478,16 @@ def run(args):
         returncode = subprocess.run(cmds).returncode
         print()
         if returncode == 0:
-            Ansi.print_ok("\nCommit has been made to conventional commits standards!")
+            Ansi.print_ok(
+                "\nCommit has been made to conventional commits standards!"
+            )
         else:
-            Ansi.print_error("\nThere was an error whilst attempting the commit!")
+            Ansi.print_error(
+                "\nThere was an error whilst attempting the commit!"
+            )
 
     elif confirm in confirmation_validator.rejections:
         print("Aborting the commit...")
-
-    check_for_update()
 
 
 def main():
