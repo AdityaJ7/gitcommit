@@ -1,3 +1,6 @@
+"""
+Style File
+"""
 from prompt_toolkit.styles import Style
 
 style = Style.from_dict(

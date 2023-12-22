@@ -1,3 +1,6 @@
+"""
+Validators File
+"""
 from prompt_toolkit.validation import Validator, ValidationError
 import re
 
@@ -89,7 +92,8 @@ class FooterValidator(Validator):
                     )
                 ]  # rough matches
                 matches_complete = [
-                    m[0] for m in re.findall(r"(\[(ch|branch ch)[0-9]+\])", line)
+                    m[0]
+                    for m in re.findall(r"(\[(ch|branch ch)[0-9]+\])", line)
                 ]  # strict matches
 
                 if len(matches_incomplete) != len(matches_complete):
